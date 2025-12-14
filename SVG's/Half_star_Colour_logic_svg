@@ -1,0 +1,72 @@
+Star Rating SVG (Half) =
+VAR MaxStars = 5
+VAR RatingValue = [Rating]
+VAR FullStars = INT ( RatingValue )
+VAR Fraction = RatingValue - FullStars
+
+-- Half-star logic
+VAR HasHalfStar =
+    IF ( Fraction >= 0.25 && Fraction < 0.75, 1, 0 )
+VAR ExtraFull =
+    IF ( Fraction >= 0.75, 1, 0 )
+
+VAR TotalFull = FullStars + ExtraFull
+VAR TotalHalf = IF ( HasHalfStar = 1 && ExtraFull = 0, 1, 0 )
+VAR EmptyStars = MaxStars - TotalFull - TotalHalf
+
+-- Color based on rating
+VAR StarColor =
+    IF ( RatingValue < 3, "red", "green" )
+
+VAR Size = 20
+VAR Gap = 5
+
+VAR StarPath =
+    "M10 1 L12.5 7.5 L19 7.5 L13.5 11.5 L16 18 L10 14 L4 18 L6.5 11.5 L1 7.5 L7.5 7.5 Z"
+
+-- Full stars
+VAR FullSVG =
+    CONCATENATEX (
+        GENERATESERIES ( 1, TotalFull ),
+        "<path d='" & StarPath & "' transform='translate("
+        & ( ( [Value] - 1 ) * ( Size + Gap ) )
+        & ",0)' fill='" & StarColor & "' />"
+    )
+
+-- Half star
+VAR HalfSVG =
+    IF (
+        TotalHalf = 1,
+        VAR Index = TotalFull + 1
+        RETURN
+            "<defs>
+                <clipPath id='halfClip'>
+                    <rect x='0' y='0' width='" & Size / 2 & "' height='" & Size & "' />
+                </clipPath>
+            </defs>
+            <g transform='translate(" & ( ( Index - 1 ) * ( Size + Gap ) ) & ",0)'>
+                <path d='" & StarPath & "' fill='lightgray' />
+                <path d='" & StarPath & "' fill='" & StarColor & "' clip-path='url(#halfClip)' />
+            </g>"
+    )
+
+-- Empty stars
+VAR EmptySVG =
+    CONCATENATEX (
+        GENERATESERIES ( 1, EmptyStars ),
+        VAR Index = TotalFull + TotalHalf + [Value]
+        RETURN
+            "<path d='" & StarPath & "' transform='translate("
+            & ( ( Index - 1 ) * ( Size + Gap ) )
+            & ",0)' fill='lightgray' />"
+    )
+
+VAR SVG =
+    "<svg xmlns='http://www.w3.org/2000/svg' width='"
+    & ( MaxStars * ( Size + Gap ) ) & "' height='" & Size & "'>"
+    & FullSVG
+    & HalfSVG
+    & EmptySVG
+    & "</svg>"
+
+RETURN "data:image/svg+xml;utf8," & SVG
