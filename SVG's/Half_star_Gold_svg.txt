@@ -1,0 +1,64 @@
+Star Rating SVG (Half) =
+VAR MaxStars = 5
+VAR RatingValue = [Rating]          -- your rating measure
+VAR FullStars  = INT ( RatingValue )
+VAR Fraction   = RatingValue - FullStars
+VAR HasHalfStar =
+    IF ( Fraction >= 0.25 && Fraction < 0.75, 1, 0 )
+VAR ExtraFullFromFraction =
+    IF ( Fraction >= 0.75, 1, 0 )
+VAR TotalFullStars = FullStars + ExtraFullFromFraction
+VAR TotalHalfStars = IF ( HasHalfStar = 1 && ExtraFullFromFraction = 0, 1, 0 )
+VAR EmptyStars = MaxStars - TotalFullStars - TotalHalfStars
+
+VAR StarSize = 20
+VAR StarGap  = 5
+
+VAR StarPath =
+    "M10 1 L12.5 7.5 L19 7.5 L13.5 11.5 L16 18 L10 14 L4 18 L6.5 11.5 L1 7.5 L7.5 7.5 Z"
+
+-- Full stars
+VAR FullStarSVG =
+    CONCATENATEX (
+        GENERATESERIES ( 1, TotalFullStars ),
+        "<path d='" & StarPath & "' transform='translate(" 
+        & ( ( [Value] - 1 ) * ( StarSize + StarGap ) ) & ",0)' fill='gold' />"
+    )
+
+-- Half star (clipped)
+VAR HalfStarSVG =
+    IF (
+        TotalHalfStars = 1,
+        VAR Index = TotalFullStars + 1
+        RETURN
+            "<defs>
+                <clipPath id='halfClip'>
+                    <rect x='0' y='0' width='" & StarSize / 2 & "' height='" & StarSize & "' />
+                </clipPath>
+            </defs>
+            <g transform='translate(" & ( ( Index - 1 ) * ( StarSize + StarGap ) ) & ",0)'>
+                <path d='" & StarPath & "' fill='lightgray' />
+                <path d='" & StarPath & "' fill='gold' clip-path='url(#halfClip)' />
+            </g>"
+    )
+
+-- Empty stars
+VAR EmptyStarSVG =
+    CONCATENATEX (
+        GENERATESERIES ( 1, EmptyStars ),
+        VAR Index = TotalFullStars + TotalHalfStars + [Value]
+        RETURN
+            "<path d='" & StarPath & "' transform='translate(" 
+            & ( ( Index - 1 ) * ( StarSize + StarGap ) ) & ",0)' fill='lightgray' />"
+    )
+
+VAR SvgContent =
+    "<svg xmlns='http://www.w3.org/2000/svg' width='" 
+    & ( MaxStars * ( StarSize + StarGap ) ) & "' height='" & StarSize & "'>"
+    & FullStarSVG
+    & HalfStarSVG
+    & EmptyStarSVG
+    & "</svg>"
+
+RETURN
+"data:image/svg+xml;utf8," & SvgContent

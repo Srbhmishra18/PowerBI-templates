@@ -1,0 +1,43 @@
+Star Rating SVG =
+VAR MaxStars = 5
+VAR RatingValue = [Rating]        -- Your rating measure
+VAR FullStars = INT ( RatingValue )
+VAR Remaining = MaxStars - FullStars
+
+-- Color logic
+VAR StarColor =
+    IF ( RatingValue < 3, "red", "green" )
+
+-- Star shape
+VAR StarPath =
+    "M10 1 L12.5 7.5 L19 7.5 L13.5 11.5 L16 18 L10 14 L4 18 L6.5 11.5 L1 7.5 L7.5 7.5 Z"
+
+VAR Size = 20
+VAR Gap = 5
+
+-- Filled stars
+VAR FullSVG =
+    CONCATENATEX (
+        GENERATESERIES ( 1, FullStars ),
+        "<path d='" & StarPath & "' transform='translate("
+        & ( ( [Value] - 1 ) * ( Size + Gap ) ) & ",0)' fill='" & StarColor & "' />"
+    )
+
+-- Empty stars
+VAR EmptySVG =
+    CONCATENATEX (
+        GENERATESERIES ( 1, Remaining ),
+        "<path d='" & StarPath & "' transform='translate("
+        & ( ( FullStars + [Value] - 1 ) * ( Size + Gap ) ) 
+        & ",0)' fill='lightgray' />"
+    )
+
+VAR SVG =
+    "<svg xmlns='http://www.w3.org/2000/svg' width='" 
+    & ( MaxStars * ( Size + Gap ) ) & "' height='" & Size & "'>"
+    & FullSVG
+    & EmptySVG
+    & "</svg>"
+
+RETURN
+"data:image/svg+xml;utf8," & SVG

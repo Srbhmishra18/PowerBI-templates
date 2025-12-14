@@ -1,0 +1,38 @@
+Star Rating SVG =
+VAR MaxStars = 5
+VAR RatingValue = [Rating]        -- your existing rating measure
+VAR FullStars = INT ( RatingValue )
+VAR RemainingStars = MaxStars - FullStars
+
+-- Single star SVG path (a simple 5-point star)
+VAR StarPath =
+    "M10 1 L12.5 7.5 L19 7.5 L13.5 11.5 L16 18 L10 14 L4 18 L6.5 11.5 L1 7.5 L7.5 7.5 Z"
+
+VAR StarSize = 20
+VAR StarGap  = 5
+
+-- Build full (filled) stars
+VAR FullStarSVG =
+    CONCATENATEX (
+        GENERATESERIES ( 1, FullStars ),
+        "<path d='" & StarPath & "' transform='translate(" 
+        & ( ( [Value] - 1 ) * ( StarSize + StarGap ) ) & ",0)' fill='gold' />"
+    )
+
+-- Build empty stars
+VAR EmptyStarSVG =
+    CONCATENATEX (
+        GENERATESERIES ( 1, RemainingStars ),
+        "<path d='" & StarPath & "' transform='translate(" 
+        & ( ( FullStars + [Value] - 1 ) * ( StarSize + StarGap ) ) & ",0)' fill='lightgray' />"
+    )
+
+VAR SvgContent =
+    "<svg xmlns='http://www.w3.org/2000/svg' width='" 
+    & ( MaxStars * ( StarSize + StarGap ) ) & "' height='" & StarSize & "'>"
+    & FullStarSVG
+    & EmptyStarSVG
+    & "</svg>"
+
+RETURN
+"data:image/svg+xml;utf8," & SvgContent
